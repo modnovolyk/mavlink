@@ -21,9 +21,18 @@ class MAVLinkTests: XCTestCase {
         super.tearDown()
     }
     
+    var erroredIds = Set<UInt8>()
+    
     func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+        let bundle = Bundle(for: type(of: self))
+        let path = bundle.url(forResource: "flight", withExtension: "tlog")
+        let data = try! Data(contentsOf: path!)
+        let mavLink = MAVLink()
+        mavLink.delegate = self
+        mavLink.parse(data: data, channel: 0)
+        
+        print(erroredIds)
+        
     }
     
     func testPerformanceExample() {
@@ -32,5 +41,32 @@ class MAVLinkTests: XCTestCase {
             // Put the code you want to measure the time of here.
         }
     }
+}
+
+extension MAVLinkTests: MAVLinkDelegate {
+    func didReceive(packet: Packet, on channel: Channel, via link: MAVLink) {
+        
+    }
     
+    func didFailToReceive(packet: Packet?, with error: Error, on channel: Channel, via link: MAVLink) {
+        switch error {
+        case let ParseError.invalidPayloadLength(messageId, _, _):
+            erroredIds.insert(messageId)
+        default:
+            
+            break
+        }
+    }
+    
+    func didParse(message: Message, from packet: Packet, on channel: Channel, via link: MAVLink) {
+        
+    }
+    
+    func didFailToParseMessage(from packet: Packet, with error: Error, on channel: Channel, via link: MAVLink) {
+        
+    }
+    
+    func didFinalize(message: Message, from data: Data, on channel: Channel, in link: MAVLink) {
+        
+    }
 }
